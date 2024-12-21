@@ -994,7 +994,7 @@ static int uart_stm32_irq_tx_ready(const struct device *dev)
 {
 	const struct uart_stm32_config *config = dev->config;
 
-	return LL_USART_IsActiveFlag_TXE(config->usart) &&
+	return LL_USART_IsActiveFlag_TXE(config->usart) && //
 		LL_USART_IsEnabledIT_TC(config->usart);
 }
 

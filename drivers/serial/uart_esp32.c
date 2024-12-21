@@ -367,6 +367,10 @@ static int uart_esp32_fifo_fill(const struct device *dev, const uint8_t *tx_data
 		return 0;
 	}
 
+	// if (tx_data[0] == 0) {
+	// 	LOG_HEXDUMP_WRN(tx_data, len, "uart_esp32_fifo_fill");
+	// }
+
 	uart_hal_write_txfifo(&data->hal, tx_data, len, &written);
 	return written;
 }
@@ -390,7 +394,9 @@ static void uart_esp32_irq_tx_enable(const struct device *dev)
 	struct uart_esp32_data *data = dev->data;
 
 	uart_hal_clr_intsts_mask(&data->hal, UART_INTR_TXFIFO_EMPTY);
+	uart_hal_clr_intsts_mask(&data->hal, UART_INTR_TX_DONE);
 	uart_hal_ena_intr_mask(&data->hal, UART_INTR_TXFIFO_EMPTY);
+	uart_hal_ena_intr_mask(&data->hal, UART_INTR_TX_DONE);
 }
 
 static void uart_esp32_irq_tx_disable(const struct device *dev)
@@ -398,14 +404,22 @@ static void uart_esp32_irq_tx_disable(const struct device *dev)
 	struct uart_esp32_data *data = dev->data;
 
 	uart_hal_disable_intr_mask(&data->hal, UART_INTR_TXFIFO_EMPTY);
+	uart_hal_disable_intr_mask(&data->hal, UART_INTR_TX_DONE);
 }
 
 static int uart_esp32_irq_tx_ready(const struct device *dev)
 {
 	struct uart_esp32_data *data = dev->data;
 
-	return (uart_hal_get_txfifo_len(&data->hal) > 0 &&
-		uart_hal_get_intr_ena_status(&data->hal) & UART_INTR_TXFIFO_EMPTY);
+	if ((uart_hal_get_intr_ena_status(&data->hal) & UART_INTR_TXFIFO_EMPTY) &&
+	    (uart_hal_get_intsts_mask(&data->hal) & UART_INTR_TXFIFO_EMPTY)) {
+		return uart_hal_get_txfifo_len(&data->hal);
+	} else {
+		return 0;
+	}
+
+	// return (uart_hal_get_txfifo_len(&data->hal) > 0 &&
+	// 	uart_hal_get_intr_ena_status(&data->hal) & UART_INTR_TXFIFO_EMPTY);
 }
 
 static void uart_esp32_irq_rx_disable(const struct device *dev)
@@ -420,6 +434,7 @@ static int uart_esp32_irq_tx_complete(const struct device *dev)
 {
 	struct uart_esp32_data *data = dev->data;
 
+//	return uart_hal_get_intsts_mask(&data->hal) & UART_INTR_TX_DONE;
 	return uart_hal_is_tx_idle(&data->hal);
 }
 
@@ -456,9 +471,10 @@ static int uart_esp32_irq_update(const struct device *dev)
 {
 	struct uart_esp32_data *data = dev->data;
 
-	uart_hal_clr_intsts_mask(&data->hal, UART_INTR_RXFIFO_FULL);
-	uart_hal_clr_intsts_mask(&data->hal, UART_INTR_RXFIFO_TOUT);
-	uart_hal_clr_intsts_mask(&data->hal, UART_INTR_TXFIFO_EMPTY);
+	// really clear interrupts here??
+	// uart_hal_clr_intsts_mask(&data->hal, UART_INTR_RXFIFO_FULL);
+	// uart_hal_clr_intsts_mask(&data->hal, UART_INTR_RXFIFO_TOUT);
+	// uart_hal_clr_intsts_mask(&data->hal, UART_INTR_TXFIFO_EMPTY);
 
 	return 1;
 }
