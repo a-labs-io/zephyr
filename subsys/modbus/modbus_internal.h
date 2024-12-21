@@ -71,7 +71,7 @@
 struct modbus_serial_config {
 	/* UART device */
 	const struct device *dev;
-	/* RTU timeout (maximum inter-frame delay) */
+	/* RTU timeout (maximum inter-frame delay) in µs */
 	uint32_t rtu_timeout;
 	/* Pointer to current position in buffer */
 	uint8_t *uart_buf_ptr;
@@ -102,7 +102,7 @@ struct modbus_context {
 	enum modbus_mode mode;
 	/* True if interface is configured as client */
 	bool client;
-	/* Amount of time client is willing to wait for response from server */
+	/* Amount of time client is willing to wait for response from server (µs) */
 	uint32_t rxwait_to;
 	/* Pointer to user server callbacks */
 	struct modbus_user_callbacks *mbs_user_cb;

@@ -249,7 +249,7 @@ static int mbc_send_cmd(struct modbus_context *ctx, const uint8_t unit_id,
 	ctx->tx_adu.unit_id = unit_id;
 	ctx->tx_adu.fc = fc;
 
-	err = modbus_tx_wait_rx_adu(ctx);
+	err = modbus_tx_wait_rx_adu(ctx); //
 	if (err != 0) {
 		return err;
 	}

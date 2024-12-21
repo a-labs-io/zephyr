@@ -38,6 +38,8 @@ static void modbus_serial_tx_on(struct modbus_context *ctx)
 	}
 
 	uart_irq_tx_enable(cfg->dev);
+
+	LOG_INF("TX on");
 }
 
 static void modbus_serial_tx_off(struct modbus_context *ctx)
@@ -48,6 +50,8 @@ static void modbus_serial_tx_off(struct modbus_context *ctx)
 	if (cfg->de != NULL) {
 		gpio_pin_set(cfg->de->port, cfg->de->pin, 0);
 	}
+
+	LOG_INF("TX off");
 }
 
 static void modbus_serial_rx_on(struct modbus_context *ctx)
@@ -59,6 +63,8 @@ static void modbus_serial_rx_on(struct modbus_context *ctx)
 	}
 
 	uart_irq_rx_enable(cfg->dev);
+
+	LOG_INF("RX on");
 }
 
 static void modbus_serial_rx_off(struct modbus_context *ctx)
@@ -69,6 +75,8 @@ static void modbus_serial_rx_off(struct modbus_context *ctx)
 	if (cfg->re != NULL) {
 		gpio_pin_set(cfg->re->port, cfg->re->pin, 0);
 	}
+
+	LOG_INF("RX off");
 }
 
 #ifdef CONFIG_MODBUS_ASCII_MODE
@@ -250,7 +258,7 @@ static int modbus_rtu_rx_adu(struct modbus_context *ctx)
 	/* Is the message long enough? */
 	if ((cfg->uart_buf_ctr < MODBUS_RTU_MIN_MSG_SIZE) ||
 	    (cfg->uart_buf_ctr > CONFIG_MODBUS_BUFFER_SIZE)) {
-		LOG_WRN("Frame length error");
+		LOG_WRN("Wrong frame length: %d", cfg->uart_buf_ctr);
 		return -EMSGSIZE;
 	}
 
@@ -277,7 +285,7 @@ static int modbus_rtu_rx_adu(struct modbus_context *ctx)
 	return 0;
 }
 
-static void rtu_tx_adu(struct modbus_context *ctx)
+static void rtu_tx_adu(struct modbus_context *ctx) //
 {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	uint16_t tx_bytes = 0;
@@ -353,6 +361,9 @@ static void cb_handler_rx(struct modbus_context *ctx)
 				   (CONFIG_MODBUS_BUFFER_SIZE -
 				    cfg->uart_buf_ctr));
 
+		LOG_WRN("RX adding %d to %d bytes, buf offset %d: 0x%x 0x%x 0x%x 0x%x", n, cfg->uart_buf_ctr,
+			cfg->uart_buf_ptr - cfg->uart_buf,
+			cfg->uart_buf_ptr[0], cfg->uart_buf_ptr[1], cfg->uart_buf_ptr[2], cfg->uart_buf_ptr[3]);
 		cfg->uart_buf_ptr += n;
 		cfg->uart_buf_ctr += n;
 	}
@@ -366,8 +377,11 @@ static void cb_handler_tx(struct modbus_context *ctx)
 	if (cfg->uart_buf_ctr > 0) {
 		n = uart_fifo_fill(cfg->dev, cfg->uart_buf_ptr,
 				   cfg->uart_buf_ctr);
+		LOG_WRN("TX %d of %d bytes, buf offset %d: 0x%x 0x%x 0x%x 0x%x", n, cfg->uart_buf_ctr,
+			cfg->uart_buf_ptr - cfg->uart_buf,
+			cfg->uart_buf_ptr[0], cfg->uart_buf_ptr[1], cfg->uart_buf_ptr[2], cfg->uart_buf_ptr[3]);
 		cfg->uart_buf_ctr -= n;
-		cfg->uart_buf_ptr += n;
+		cfg->uart_buf_ptr += n; // is this necessary even if ctr == 0?
 		return;
 	}
 
@@ -377,9 +391,14 @@ static void cb_handler_tx(struct modbus_context *ctx)
 	 */
 	if (uart_irq_tx_complete(cfg->dev)) {
 		/* Disable transmission */
+		LOG_WRN("TX complete");
+		cfg->uart_buf_ctr = 0;
 		cfg->uart_buf_ptr = &cfg->uart_buf[0];
 		modbus_serial_tx_off(ctx);
 		modbus_serial_rx_on(ctx);
+	}
+	else {
+		LOG_WRN("TX *not yet* complete");
 	}
 }
 
@@ -394,11 +413,17 @@ static void uart_cb_handler(const struct device *dev, void *app_data)
 
 	if (uart_irq_update(dev) && uart_irq_is_pending(dev)) {
 
+		LOG_WRN("UART rx ready: %d, tx ready: %d, tx complete: %d",
+			uart_irq_rx_ready(dev), uart_irq_tx_ready(dev), uart_irq_tx_complete(dev)
+		);
+
 		if (uart_irq_rx_ready(dev)) {
+			//LOG_WRN("RX ready");
 			cb_handler_rx(ctx);
 		}
 
 		if (uart_irq_tx_ready(dev)) {
+			//LOG_WRN("TX ready: 1, complete: %d", uart_irq_tx_complete(cfg->dev));
 			cb_handler_tx(ctx);
 		}
 	}
@@ -415,6 +440,8 @@ static void rtu_tmr_handler(struct k_timer *t_id)
 		LOG_ERR("Failed to get Modbus context");
 		return;
 	}
+
+	LOG_WRN("RX finished (timed out)");
 
 	k_work_submit(&ctx->server_work);
 }

@@ -114,7 +114,7 @@ static void modbus_rx_handler(struct k_work *item)
 	}
 }
 
-void modbus_tx_adu(struct modbus_context *ctx)
+void modbus_tx_adu(struct modbus_context *ctx) //
 {
 	switch (ctx->mode) {
 	case MODBUS_MODE_RTU:
@@ -135,7 +135,7 @@ void modbus_tx_adu(struct modbus_context *ctx)
 	}
 }
 
-int modbus_tx_wait_rx_adu(struct modbus_context *ctx)
+int modbus_tx_wait_rx_adu(struct modbus_context *ctx) //
 {
 	k_sem_reset(&ctx->client_wait_sem);
 

@@ -518,7 +518,7 @@ struct modbus_iface_param {
 	union {
 		struct modbus_server_param server;
 		/** Amount of time client will wait for
-		 *  a response from the server.
+		 *  a response from the server in µs.
 		 */
 		uint32_t rx_timeout;
 	};
