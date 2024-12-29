@@ -21,6 +21,8 @@ manifest:
   remotes:
     - name: upstream
       url-base: https://github.com/zephyrproject-rtos
+    - name: alabs
+      url-base: https://github.com/a-labs-io
     - name: babblesim
       url-base: https://github.com/BabbleSim
 
@@ -162,7 +164,8 @@ manifest:
       groups:
         - hal
     - name: hal_espressif
-      revision: pull/379/head
+      remote: alabs
+      revision: ieee802154-esp32c6-wip
       path: modules/hal/espressif
       west-commands: west/west-commands.yml
       groups:

@@ -299,6 +299,8 @@ static int esp32_tx(const struct device *dev, enum ieee802154_tx_mode tx_mode, s
 		err = esp_ieee802154_transmit(frag->data, false);
 		break;
 	case IEEE802154_TX_MODE_CCA:
+	/* ToDo: Double-check if this is actually CSMA/CA */
+	case IEEE802154_TX_MODE_CSMA_CA:
 		err = esp_ieee802154_transmit(frag->data, true);
 		break;
 	case IEEE802154_TX_MODE_TXTIME:
@@ -351,6 +353,8 @@ static int esp32_stop(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 
+	/* ToDo: Fixme, otherwise we don't boot */
+	return 0;
 	return esp_ieee802154_disable() == 0 ? 0 : -EIO;
 }
 
@@ -404,6 +408,18 @@ static void esp32_iface_init(struct net_if *iface)
 	ieee802154_init(iface);
 }
 
+static int esp32_ed_scan(const struct device *dev, uint16_t duration,
+		       energy_scan_done_cb_t done_cb)
+{
+	ARG_UNUSED(dev);
+	ARG_UNUSED(duration);
+	ARG_UNUSED(done_cb);
+
+	/* ed_scan not (yet?) supported */
+
+	return -ENOTSUP;
+}
+
 static const struct ieee802154_radio_api esp32_radio_api = {
 	.iface_api.init = esp32_iface_init,
 
@@ -415,6 +431,7 @@ static const struct ieee802154_radio_api esp32_radio_api = {
 	.tx               = esp32_tx,
 	.start            = esp32_start,
 	.stop             = esp32_stop,
+	.ed_scan          = esp32_ed_scan,
 	.configure        = esp32_configure,
 	.attr_get         = esp32_attr_get,
 };
