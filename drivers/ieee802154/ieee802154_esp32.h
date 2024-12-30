@@ -31,6 +31,11 @@ struct esp32_data {
 	 */
 	struct k_sem tx_wait;
 
+	/* TX buffer. First byte is PHR (length), remaining bytes are
+	 * MPDU data.
+	 */
+	uint8_t tx_psdu[1 + IEEE802154_MAX_PHY_PACKET_SIZE];
+
 	/*
 	 * ACK frame (stored until esp_ieee802154_receive_handle_done is called)
 	 * First byte is frame length (PHR), followed by payload (PSDU)
