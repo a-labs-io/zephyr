@@ -23,9 +23,14 @@ void z_sys_poweroff(void)
 	LL_PWR_ClearFlag_WU();
 #endif /* CONFIG_STM32_WKUP_PINS */
 
+#ifdef LL_PWR_MODE_SHUTDOWN
 	LL_PWR_SetPowerMode(LL_PWR_MODE_SHUTDOWN);
-	LL_LPM_EnableDeepSleep();
+#else
+	LL_PWR_SetPowerMode(LL_PWR_MODE_STANDBY);
+#endif
+
 	LL_DBGMCU_DisableDBGStandbyMode();
+	LL_LPM_EnableDeepSleep();
 
 	k_cpu_idle();
 
