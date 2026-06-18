@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# pylint: disable=duplicate-code
+
 from runners.core import ZephyrBinaryRunner
 
 
