@@ -58,6 +58,7 @@ struct i2c_bee_data {
 	struct k_sem sync_sem;
 	struct i2c_bee_context ctx;
 	uint8_t errs;
+	uint32_t dev_config;
 };
 
 static inline bool i2c_bee_next_msg_available(struct i2c_bee_context *ctx)
@@ -276,6 +277,7 @@ static int i2c_bee_configure(const struct device *dev, uint32_t dev_config)
 		goto error;
 	}
 
+	data->dev_config = dev_config;
 	I2C_Init(i2c, &i2c_init_struct);
 
 	I2C_Cmd(i2c, ENABLE);
@@ -284,6 +286,19 @@ error:
 	k_mutex_unlock(&data->bus_mutex);
 
 	return err;
+}
+
+static int i2c_bee_get_config(const struct device *dev, uint32_t *dev_config)
+{
+	struct i2c_bee_data *data = dev->data;
+
+	if (!data->dev_config) {
+		return -EIO;
+	}
+
+	*dev_config = data->dev_config;
+
+	return 0;
 }
 
 static void i2c_bee_isr(const struct device *dev)
@@ -347,6 +362,7 @@ static int i2c_bee_init(const struct device *dev)
 
 static DEVICE_API(i2c, i2c_bee_driver_api) = {
 	.configure = i2c_bee_configure,
+	.get_config = i2c_bee_get_config,
 	.transfer = i2c_bee_transfer,
 };
 
