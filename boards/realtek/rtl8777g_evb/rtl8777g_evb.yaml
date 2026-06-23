@@ -15,7 +15,7 @@ supported:
   # - counter
   # - watchdog
   # - bluetooth
-  # - i2c
+  - i2c
   # - pwm
   # - entropy
   # - dma
